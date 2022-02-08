@@ -1,4 +1,4 @@
-module filters
+module github.com/dikhimartin/filters
 
 go 1.15
 
