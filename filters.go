@@ -1,15 +1,16 @@
-package filters
+package lib
 
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/iancoleman/strcase"
-	"gorm.io/gorm"
 	"math"
 	"net/url"
 	"reflect"
 	"strconv"
 	"strings"
+
+	"github.com/iancoleman/strcase"
+	"gorm.io/gorm"
 )
 
 // PageModel struct
@@ -22,13 +23,13 @@ type PageModel struct {
 	CurrentParam         string      `json:"current_param"`
 	First                bool        `json:"first"` // (Optional)
 	Last                 bool        `json:"last"`
-	HasPages             bool        `json:"has_pages"`
+	HasPages             bool        `json:"hasPages"`
 	Paginates            []int       `json:"paginates"`
-	TotalPages           float64     `json:"total_pages,omitempty"` // (Optional) Total data shows
-	TotalVisible         int         `json:"total,omitempty"`       // Total real data
-	TotalRecordsFiltered int         `json:"visible,omitempty"`     // (Optional) Total records filter
-	Additional           interface{} `json:"additional,omitempty"`  // (Optional)
-	Summary              interface{} `json:"summary,omitempty"`     // (Optional)
+	TotalPages           float64     `json:"totalPages,omitempty"` // (Optional) Total data shows
+	TotalVisible         int         `json:"total,omitempty"`      // Total real data
+	TotalRecordsFiltered int         `json:"visible,omitempty"`    // (Optional) Total records filter
+	Additional           interface{} `json:"additional,omitempty"` // (Optional)
+	Summary              interface{} `json:"summary,omitempty"`    // (Optional)
 }
 
 // BeetweenString func
@@ -53,8 +54,8 @@ func NormalizeParam(Param string) string {
 	v := BeetweenString(Param, "page=", "&")
 
 	value := strings.Replace(Param, "page="+v+"", "", -1)
-	val_int, _ := strconv.Atoi(value)
-	if val_int != 0 {
+	valInt, _ := strconv.Atoi(value)
+	if valInt != 0 {
 		value = ""
 	}
 	if v == "" {
@@ -65,37 +66,37 @@ func NormalizeParam(Param string) string {
 
 // GeneratePagination func
 func GeneratePagination(pageNumber, pageSize, TotalVisible int, CurrentParam []byte, Items interface{}) *PageModel {
-	data_model := &PageModel{}
+	dataModel := &PageModel{}
 
-	total_pages := math.Ceil(float64(TotalVisible) / float64(pageSize))
-	if total_pages == math.Inf(0) || math.IsNaN(total_pages) {
-		total_pages = 0
+	totalPages := math.Ceil(float64(TotalVisible) / float64(pageSize))
+	if totalPages == math.Inf(0) || math.IsNaN(totalPages) {
+		totalPages = 0
 	}
 
 	DecodedParam, _ := url.QueryUnescape(string(CurrentParam))
 	Parameter := NormalizeParam(DecodedParam)
 
-	data_model.TotalPages = total_pages
-	data_model.TotalVisible = TotalVisible
-	data_model.TotalRecordsFiltered = reflect.ValueOf(Items).Len()
-	data_model.Items = Items
-	data_model.Page = pageNumber
-	data_model.PrevPage = pageNumber - 1
-	data_model.NextPage = pageNumber + 1
-	data_model.PostsPerPage = pageSize
-	data_model.CurrentParam = Parameter
-	data_model.Paginates = Paginates(int(total_pages))
-	data_model.HasPages = HasPages(int(total_pages))
-	data_model.First = pageNumber == 1
-	data_model.Last = (pageNumber * pageSize) >= data_model.TotalVisible
+	dataModel.TotalPages = totalPages
+	dataModel.TotalVisible = TotalVisible
+	dataModel.TotalRecordsFiltered = reflect.ValueOf(Items).Len()
+	dataModel.Items = Items
+	dataModel.Page = pageNumber
+	dataModel.PrevPage = pageNumber - 1
+	dataModel.NextPage = pageNumber + 1
+	dataModel.PostsPerPage = pageSize
+	dataModel.CurrentParam = Parameter
+	dataModel.Paginates = Paginates(int(totalPages))
+	dataModel.HasPages = HasPages(int(totalPages))
+	dataModel.First = pageNumber == 1
+	dataModel.Last = (pageNumber * pageSize) >= dataModel.TotalVisible
 
-	return data_model
+	return dataModel
 }
 
 // Paginates func
-func Paginates(total_pages int) []int {
+func Paginates(totalPages int) []int {
 	var paginates []int
-	for i := 0; i < total_pages; i++ {
+	for i := 0; i < totalPages; i++ {
 		numdata := i + 1
 		paginates = append(paginates, numdata)
 	}
@@ -103,14 +104,14 @@ func Paginates(total_pages int) []int {
 }
 
 // HasPages func
-func HasPages(total_pages int) bool {
-	var has_pages bool
-	if total_pages > 1 {
-		has_pages = true
+func HasPages(totalPages int) bool {
+	var hasPages bool
+	if totalPages > 1 {
+		hasPages = true
 	} else {
-		has_pages = false
+		hasPages = false
 	}
-	return has_pages
+	return hasPages
 }
 
 // FilterItem struct
@@ -129,7 +130,7 @@ type QueryFilter struct {
 
 // NormalizeFieldName func
 func NormalizeFieldName(field string) string {
-	slices := strings.Split(field, ".")
+	slices := strings.Split(field, ",")
 	if len(slices) == 1 {
 		return field
 	}
@@ -343,7 +344,7 @@ func CreateWhereCause(filter QueryFilter, queryFilters *[]string, whereParams *[
 	return
 }
 
-// CreateCustomCasue func
+// CreateCustomFilters func
 // => Example
 // => filters=["age", "not in", [20,21] ]
 // -> pageFilters      := [["id","=","6"],["AND"],["status_transaction","=","waiting"],["AND"],["business_id","=","10"]]
