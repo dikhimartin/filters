@@ -8,7 +8,6 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
-
 	"github.com/iancoleman/strcase"
 	"gorm.io/gorm"
 )
