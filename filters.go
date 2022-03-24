@@ -1,4 +1,4 @@
-package lib
+package fliters
 
 import (
 	"encoding/json"
