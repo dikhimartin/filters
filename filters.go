@@ -3,32 +3,32 @@ package filters
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/iancoleman/strcase"
+	"gorm.io/gorm"
 	"math"
 	"net/url"
 	"reflect"
 	"strconv"
 	"strings"
-	"github.com/iancoleman/strcase"
-	"gorm.io/gorm"
 )
 
 // PageModel struct
 type PageModel struct {
-	Items                interface{} `json:"items"` // (Optional)
-	Page                 int         `json:"page"`
-	PrevPage             int         `json:"prev_page"`
-	NextPage             int         `json:"next_page"`
-	PostsPerPage         int         `json:"size"`
-	CurrentParam         string      `json:"current_param"`
-	First                bool        `json:"first"` // (Optional)
-	Last                 bool        `json:"last"`
-	HasPages             bool        `json:"hasPages"`
-	Paginates            []int       `json:"paginates"`
-	TotalPages           float64     `json:"totalPages,omitempty"` // (Optional) Total data shows
-	TotalVisible         int         `json:"total,omitempty"`      // Total real data
-	TotalRecordsFiltered int         `json:"visible,omitempty"`    // (Optional) Total records filter
-	Additional           interface{} `json:"additional,omitempty"` // (Optional)
-	Summary              interface{} `json:"summary,omitempty"`    // (Optional)
+	Items        interface{} `json:"items"` // (Optional)
+	Page         int         `json:"page"`
+	PrevPage     int         `json:"prev_page"`
+	NextPage     int         `json:"next_page"`
+	PostsPerPage int         `json:"size"`
+	CurrentParam string      `json:"current_param"`
+	First        bool        `json:"first"` // (Optional)
+	Last         bool        `json:"last"`
+	HasPages     bool        `json:"hasPages"`
+	Paginates    []int       `json:"paginates"`
+	TotalPages   float64     `json:"totalPages,omitempty"` // (Optional) Total data shows
+	TotalRecord  int         `json:"total,omitempty"`      // Total real data
+	Visible      int         `json:"visible,omitempty"`    // (Optional) Total records filter
+	Additional   interface{} `json:"additional,omitempty"` // (Optional)
+	Summary      interface{} `json:"summary,omitempty"`    // (Optional)
 }
 
 // BeetweenString func
@@ -64,10 +64,10 @@ func NormalizeParam(Param string) string {
 }
 
 // GeneratePagination func
-func GeneratePagination(pageNumber, pageSize, TotalVisible int, CurrentParam []byte, Items interface{}) *PageModel {
+func GeneratePagination(pageNumber, pageSize, TotalRecord int, CurrentParam []byte, Items interface{}) *PageModel {
 	dataModel := &PageModel{}
 
-	totalPages := math.Ceil(float64(TotalVisible) / float64(pageSize))
+	totalPages := math.Ceil(float64(TotalRecord) / float64(pageSize))
 	if totalPages == math.Inf(0) || math.IsNaN(totalPages) {
 		totalPages = 0
 	}
@@ -76,8 +76,8 @@ func GeneratePagination(pageNumber, pageSize, TotalVisible int, CurrentParam []b
 	Parameter := NormalizeParam(DecodedParam)
 
 	dataModel.TotalPages = totalPages
-	dataModel.TotalVisible = TotalVisible
-	dataModel.TotalRecordsFiltered = reflect.ValueOf(Items).Len()
+	dataModel.TotalRecord = TotalRecord
+	dataModel.Visible = reflect.ValueOf(Items).Len()
 	dataModel.Items = Items
 	dataModel.Page = pageNumber
 	dataModel.PrevPage = pageNumber - 1
@@ -87,7 +87,7 @@ func GeneratePagination(pageNumber, pageSize, TotalVisible int, CurrentParam []b
 	dataModel.Paginates = Paginates(int(totalPages))
 	dataModel.HasPages = HasPages(int(totalPages))
 	dataModel.First = pageNumber == 1
-	dataModel.Last = (pageNumber * pageSize) >= dataModel.TotalVisible
+	dataModel.Last = (pageNumber * pageSize) >= dataModel.TotalRecord
 
 	return dataModel
 }
